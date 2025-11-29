@@ -4,6 +4,8 @@ on:
   push:
     branches: ["master"]
   workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'  # 每小时的第0分钟运行
 
 permissions:
   contents: read
