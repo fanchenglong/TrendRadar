@@ -31,7 +31,12 @@ jobs:
             echo "No output folders found"
             exit 1
           fi
-          cp "${LATEST_FOLDER}html/当日汇总.html" index.html
+          SUMMARY_FILE="${LATEST_FOLDER}html/当日汇总.html"
+          if [ ! -f "$SUMMARY_FILE" ]; then
+            echo "Summary file not found: $SUMMARY_FILE"
+            exit 1
+          fi
+          cp "$SUMMARY_FILE" index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
