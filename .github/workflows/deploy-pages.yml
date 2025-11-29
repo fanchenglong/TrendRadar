@@ -1,0 +1,75 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Find latest date folder and update index.html
+        run: |
+          echo "🔍 Searching for latest date folder in output directory..."
+          
+          # Find the latest date folder (sorted by name in descending order)
+          LATEST_FOLDER=$(ls -d output/*/ 2>/dev/null | sort -r | head -n 1)
+          
+          if [ -z "$LATEST_FOLDER" ]; then
+            echo "⚠️ No date folders found in output directory"
+            echo "Using existing index.html if available"
+          else
+            echo "📁 Latest folder: $LATEST_FOLDER"
+            
+            # Check if the summary HTML file exists
+            SUMMARY_FILE="${LATEST_FOLDER}html/当日汇总.html"
+            
+            if [ -f "$SUMMARY_FILE" ]; then
+              echo "📄 Found summary file: $SUMMARY_FILE"
+              echo "📋 Copying to index.html..."
+              cp "$SUMMARY_FILE" index.html
+              echo "✅ index.html updated successfully"
+            else
+              echo "⚠️ Summary file not found: $SUMMARY_FILE"
+              echo "Using existing index.html if available"
+            fi
+          fi
+          
+          # Verify index.html exists
+          if [ -f "index.html" ]; then
+            echo "✅ index.html is ready for deployment"
+          else
+            echo "❌ Error: No index.html file available for deployment"
+            exit 1
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
